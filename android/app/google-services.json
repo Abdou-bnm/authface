@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "26214372638",
+    "project_id": "authface-40370",
+    "storage_bucket": "authface-40370.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:26214372638:android:5e581ca74cf8694c26a50f",
+        "android_client_info": {
+          "package_name": "com.example.authface"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv6wQ4SXHRBrL8xctivKaHDwrPtTvjIqk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
