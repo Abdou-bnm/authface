@@ -8,6 +8,7 @@ import 'screens/auth/verify_email_page.dart';
 import 'screens/face/face_compare_page.dart';
 
 import 'screens/home/home_page.dart';
+import 'screens/auth/face_login_page.dart'; // adjust the path
 
 class AppRouter {
   static final router = GoRouter(
@@ -20,6 +21,10 @@ class AppRouter {
       GoRoute(
         path: '/signup',
         builder: (_, __) => const SignUpPage(),
+      ),
+      GoRoute(
+        path: '/face-login',
+        builder: (context, state) => const FaceLoginPage(),
       ),
       GoRoute(
         path: '/forgot-password',

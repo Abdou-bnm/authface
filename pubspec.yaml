@@ -95,3 +95,6 @@ flutter:
     - assets/logo/
     - assets/models/
     - assets/images/
+    - assets/sounds/success.mp3
+    - assets/sounds/fail.mp3
+

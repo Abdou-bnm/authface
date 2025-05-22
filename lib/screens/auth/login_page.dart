@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:local_auth/local_auth.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../core/constants.dart';
 import '../../widgets/show_snackbar.dart';
 
@@ -16,48 +16,23 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _localAuth = LocalAuthentication();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   bool _loading = false;
-  bool _isBiometricAvailable = false;
 
   @override
-  void initState() {
-    super.initState();
-    _checkBiometrics();
+  void dispose() {
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
-  Future<void> _checkBiometrics() async {
+  Future<void> _playSound(String path) async {
     try {
-      final canCheckBiometrics = await _localAuth.canCheckBiometrics;
-      final isDeviceSupported = await _localAuth.isDeviceSupported();
-      setState(() {
-        _isBiometricAvailable = canCheckBiometrics && isDeviceSupported;
-      });
+      await _audioPlayer.setVolume(1.0);
+      await _audioPlayer.play(AssetSource(path.replaceFirst('assets/', '')));
     } catch (e) {
-      setState(() {
-        _isBiometricAvailable = false;
-      });
-    }
-  }
-
-  Future<void> _loginWithFaceId() async {
-    try {
-      final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to sign in',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
-      );
-
-      if (authenticated) {
-        // Here you would typically verify the user's identity with your backend
-        // For now, we'll just show a success message
-        showSnackBar(context, "Face ID authentication successful!");
-        GoRouter.of(context).go('/home');
-      }
-    } catch (e) {
-      showSnackBar(context, "Face ID authentication failed: $e", isError: true);
+      debugPrint('Error playing sound: $e');
     }
   }
 
@@ -67,6 +42,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (email.isEmpty || password.length < 6) {
       showSnackBar(context, "Enter valid credentials", isError: true);
+      await _playSound('assets/sounds/fail.mp3');
       return;
     }
 
@@ -80,18 +56,18 @@ class _LoginPageState extends State<LoginPage> {
 
       final isVerified =
           FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+
       if (!isVerified) {
         await FirebaseAuth.instance.signOut();
-        showSnackBar(
-          context,
-          "Verify your email before logging in",
-          isError: true,
-        );
+        showSnackBar(context, "Verify your email before logging in", isError: true);
+        await _playSound('assets/sounds/fail.mp3');
       } else {
+        await _playSound('assets/sounds/success.mp3');
         GoRouter.of(context).go('/home');
       }
     } on FirebaseAuthException catch (e) {
       showSnackBar(context, e.message ?? "Login failed", isError: true);
+      await _playSound('assets/sounds/fail.mp3');
     } finally {
       setState(() => _loading = false);
     }
@@ -110,9 +86,11 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
+      await _playSound('assets/sounds/success.mp3');
       GoRouter.of(context).go('/home');
     } catch (e) {
       showSnackBar(context, "Google login failed: $e", isError: true);
+      await _playSound('assets/sounds/fail.mp3');
     }
   }
 
@@ -206,21 +184,19 @@ class _LoginPageState extends State<LoginPage> {
                     side: const BorderSide(color: Constants.accentColor),
                   ),
                 ),
-                if (_isBiometricAvailable) ...[
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.face, color: Constants.accentColor),
-                    label: const Text(
-                      "Sign in with Face ID",
-                      style: TextStyle(color: Constants.accentColor),
-                    ),
-                    onPressed: _loginWithFaceId,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                      side: const BorderSide(color: Constants.accentColor),
-                    ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.face, color: Constants.accentColor),
+                  label: const Text(
+                    "Sign in with Face ID",
+                    style: TextStyle(color: Constants.accentColor),
                   ),
-                ],
+                  onPressed: () => GoRouter.of(context).push('/face-login'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    side: const BorderSide(color: Constants.accentColor),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => GoRouter.of(context).go('/signup'),
